@@ -1,0 +1,28 @@
+{
+    "name": "chazer/php-isp-base",
+    "description": "This library can help you develop a PHP-based plugins for ISPsystem's software products",
+    "type": "library",
+    "keywords": ["ISPsystem", "plugin"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Aleksandr Chazov",
+            "email": "develop@chazer.ru"
+        }
+    ],
+    "require": {
+        "php":">=5.5.0",
+        "symfony/console": "*",
+        "symfony/http-foundation": "*",
+        "symfony/process": "*",
+        "psr/log": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "ISP\\": "src/ISP"
+        }
+    }
+}
