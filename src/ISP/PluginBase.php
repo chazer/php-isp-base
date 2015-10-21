@@ -362,8 +362,8 @@ class PluginBase
      */
     protected function processPluginAware($value)
     {
-        is_array($value) || $value = [&$value];
-        foreach ($value as &$v) {
+        $array = is_array($value) ? $value : [&$value];
+        foreach ($array as &$v) {
             if ($v instanceof PluginAwareInterface) {
                 $v->setPlugin($this);
             }
