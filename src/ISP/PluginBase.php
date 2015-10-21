@@ -23,11 +23,11 @@ use Symfony\Component\Console\Output\StreamOutput;
 
 defined('MGR_NAME') or define('MGR_NAME', 'ispmgr');
 defined('MGR_ROOT') or define('MGR_ROOT', getcwd());
-define('MGR_CONFIG_FILE', 'etc/' . MGR_NAME . '.conf');
-define('PLUGIN_NAME', 'noname');
-define('PLUGIN_LOG_FILE', 'var/plugin_' . PLUGIN_NAME . '.log');
-define('CONFIG_FILE', 'etc/plugin_' . PLUGIN_NAME . '.conf');
-define('CONFIG_FORMAT', 'conf');
+defined('MGR_CONFIG_FILE') or define('MGR_CONFIG_FILE', 'etc/' . MGR_NAME . '.conf');
+defined('PLUGIN_NAME') or define('PLUGIN_NAME', 'noname');
+defined('PLUGIN_LOG_FILE') or define('PLUGIN_LOG_FILE', 'var/plugin_' . PLUGIN_NAME . '.log');
+defined('CONFIG_FILE') or define('CONFIG_FILE', 'etc/plugin_' . PLUGIN_NAME . '.conf');
+defined('CONFIG_FORMAT') or define('CONFIG_FORMAT', 'conf');
 
 class PluginBase
 {
@@ -46,7 +46,6 @@ class PluginBase
 
     /** @var string */
     private $mgrName;
-
 
     /** @var ManagerConfigs */
     private $mgrConfigs;
