@@ -129,6 +129,25 @@ class PluginBase
     }
 
     /**
+     * @param string $file
+     * @param string $format
+     * @return PluginConfigs
+     */
+    protected function createPluginConfigs($file, $format = 'conf')
+    {
+        return new PluginConfigs($file, $format);
+    }
+
+    /**
+     * @param string $file
+     * @return ManagerConfigs
+     */
+    protected function createManagerConfigs($file)
+    {
+        return new ManagerConfigs($file);
+    }
+
+    /**
      * Get plugin config object
      *
      * @return bool|PluginConfigs
@@ -141,7 +160,7 @@ class PluginBase
         if (isset($this->configs))
             return $this->configs;
 
-        $this->configs = new PluginConfigs($this->getMgrRoot() . $this->configFile, CONFIG_FORMAT);
+        $this->configs = $this->createPluginConfigs($this->getMgrRoot() . $this->configFile, CONFIG_FORMAT);
         $this->processPluginAware($this->configs);
         if (!$this->configs->load()) {
             $this->getLogger()->warning('Plugin config not loaded');
@@ -162,7 +181,7 @@ class PluginBase
         if (isset($this->mgrConfigs))
             return $this->mgrConfigs;
 
-        $this->mgrConfigs = new ManagerConfigs($this->getMgrRoot() . $this->mgrConfigFile);
+        $this->mgrConfigs = $this->createManagerConfigs($this->getMgrRoot() . $this->mgrConfigFile);
         $this->processPluginAware($this->mgrConfigs);
         if (!$this->mgrConfigs->load()) {
             $this->getLogger()->warning('Manager config not loaded');
