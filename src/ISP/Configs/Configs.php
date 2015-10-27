@@ -37,6 +37,8 @@ class Configs
      */
     private $readers = [];
 
+    private $_init = false;
+
     /**
      * @param string $file
      * @param string $format json|ini|yaml|xml
@@ -47,7 +49,22 @@ class Configs
         $this->format = $format;
         $this->registerFormat('conf', new ConfFileReader());
         $this->registerFormat('json', new JsonFileReader());
-        $this->reset();
+    }
+
+    protected function init()
+    {
+        if ($this->_init)
+            return;
+        // Set flag first: important!
+        $this->_init = true;
+
+        $this->initParams();
+    }
+
+    protected function reset()
+    {
+        $this->_init = false;
+        $this->params = [];
     }
 
     /**
@@ -71,12 +88,6 @@ class Configs
         // $this->addParam('DBUser', 'root');
     }
 
-    protected function reset()
-    {
-        $this->params = [];
-        $this->initParams();
-    }
-
     protected function addParam($name, $type = null, $default = null)
     {
         if (null === $default) {
@@ -97,6 +108,7 @@ class Configs
 
     private function getParamData($name)
     {
+        $this->init();
         $key = $this->normalizeParamName($name);
         $param = array_key_exists($key, $this->params) ? $this->params[$key] : [];
         $param = array_merge(['name' => $name, 'default' => null], $param);
@@ -127,6 +139,7 @@ class Configs
     public function load()
     {
         $this->reset();
+        $this->init();
 
         if (!is_file($this->file)) {
             $saved = $this->save();
@@ -151,6 +164,8 @@ class Configs
      */
     public function save()
     {
+        $this->init();
+
         $params = [];
         foreach ($this->params as $name=>$param) {
             $value = $this->arrayValue($param, 'value', null);
@@ -181,6 +196,7 @@ class Configs
 
     public function hasParam($name)
     {
+        $this->init();
         $name = $this->normalizeParamName($name);
         return array_key_exists($name, $this->params);
     }
