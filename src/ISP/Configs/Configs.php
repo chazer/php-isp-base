@@ -12,6 +12,11 @@ use Exception;
 
 class Configs
 {
+    const TYPE_STR = 'string';
+    const TYPE_INT = 'int';
+    const TYPE_BOOL = 'bool';
+    const TYPE_STR_LIST = 'string[]';
+
     /**
      * @var string
      */
@@ -25,7 +30,7 @@ class Configs
     /**
      * @var array
      */
-    protected $params = [];
+    private $params = [];
 
     /**
      * @var FileReaderInterface[]
@@ -42,6 +47,7 @@ class Configs
         $this->format = $format;
         $this->registerFormat('conf', new ConfFileReader());
         $this->registerFormat('json', new JsonFileReader());
+        $this->reset();
     }
 
     /**
@@ -53,6 +59,54 @@ class Configs
     {
         $this->readers[strtolower($name)] = $reader;
         return $this;
+    }
+
+    /**
+     * Register config parameters
+     */
+    protected function initParams()
+    {
+        // Example:
+        // $this->addParam('DBHost', 'localhost');
+        // $this->addParam('DBUser', 'root');
+    }
+
+    protected function reset()
+    {
+        $this->params = [];
+        $this->initParams();
+    }
+
+    protected function addParam($name, $type = null, $default = null)
+    {
+        if (null === $default) {
+            // for array types use empty array as default
+            self::TYPE_STR_LIST !== $type || $default = [];
+        }
+        $data = $this->getParamData($name);
+        $data['name'] = $name;
+        $data['type'] = $type;
+        $data['default'] = $default;
+        $this->setParamData($name, $data);
+    }
+
+    private function arrayValue($array, $key, $default)
+    {
+        return array_key_exists($key, $array) ? $array[$key] : $default;
+    }
+
+    private function getParamData($name)
+    {
+        $key = $this->normalizeParamName($name);
+        $param = array_key_exists($key, $this->params) ? $this->params[$key] : [];
+        $param = array_merge(['name' => $name, 'default' => null], $param);
+        return $param;
+    }
+
+    private function setParamData($name, $data)
+    {
+        $key = $this->normalizeParamName($name);
+        $this->params[$key] = $data;
     }
 
     /**
@@ -72,6 +126,8 @@ class Configs
      */
     public function load()
     {
+        $this->reset();
+
         if (!is_file($this->file)) {
             $saved = $this->save();
             if ($saved)
@@ -82,7 +138,7 @@ class Configs
 
         if ($success && is_array($config)) {
             foreach ($config as $param => $value) {
-                $this->setParam($param, $value);
+                $this->setParam($param, $this->fromStringForm($param, $value));
             }
             return true;
         } else {
@@ -95,25 +151,38 @@ class Configs
      */
     public function save()
     {
-        $success = $this->getReader()->save($this->file, $this->params);
+        $params = [];
+        foreach ($this->params as $name=>$param) {
+            $value = $this->arrayValue($param, 'value', null);
+            if (null !== $value) {
+                $params[$name] = $this->toStringForm($name, $value);
+            }
+        }
+        $success = $this->getReader()->save($this->file, $params);
         return $success;
     }
 
     /**
      * @param string $name
-     * @param mixed $default
      * @return mixed
      */
-    public function getParam($name, $default = null)
+    public function getParam($name)
     {
-        $name = $this->normalizeParamName($name);
-        return isset($this->params[$name]) ? $this->params[$name] : $default;
+        $data = $this->getParamData($name);
+        return $this->arrayValue($data, 'value', $data['default']);
     }
 
     public function setParam($name, $value)
     {
+        $data = $this->getParamData($name);
+        $data['value'] = $value;
+        $this->setParamData($name, $data);
+    }
+
+    public function hasParam($name)
+    {
         $name = $this->normalizeParamName($name);
-        $this->params[$name] = $value;
+        return array_key_exists($name, $this->params);
     }
 
     /**
@@ -121,26 +190,16 @@ class Configs
      */
     public function getParams()
     {
-        return $this->params;
+        $params = [];
+        foreach ($this->params as $name => $data) {
+            array_key_exists('value', $data) && $data[$name] = $data['value'];
+        }
+        return $params;
     }
 
-    protected function normalizeParamName($name)
+    private function normalizeParamName($name)
     {
         return ucfirst(strtolower($name));
-    }
-
-    /**
-     * @param string $name
-     * @param mixed $default
-     * @return bool
-     */
-    public function getBoolParam($name, $default = null)
-    {
-        if (isset($this->params[$name])) {
-            return $this->toBoolean($this->params[$name]);
-        } else {
-            return $this->toBoolean($default);
-        }
     }
 
     /**
@@ -151,6 +210,7 @@ class Configs
      */
     public function toBoolean($value)
     {
+        $value = strtolower($value);
         if (in_array($value, [0, false, null, '', 'off', 'no', 'n'])) {
             return false;
         }
@@ -158,5 +218,34 @@ class Configs
             return true;
         }
         return false;
+    }
+
+    protected function toStringForm($param, $value)
+    {
+        $data = $this->getParamData($param);
+        $type = $this->arrayValue($data, 'type', null);
+        if (self::TYPE_BOOL === $type) {
+            return $value ? 'On' : 'Off';
+        }
+        return $value;
+    }
+
+    protected function fromStringForm($param, $value)
+    {
+        $data = $this->getParamData($param);
+        $type = $this->arrayValue($data, 'type', null);
+        switch ($type) {
+            case self::TYPE_STR:
+                return strval($value);
+                break;
+            case self::TYPE_BOOL:
+                return $this->toBoolean($value);
+                break;
+            case self::TYPE_INT:
+                return intval($value);
+                break;
+            default:
+                return $value;
+        }
     }
 }

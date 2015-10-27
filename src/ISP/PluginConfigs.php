@@ -15,16 +15,19 @@ class PluginConfigs extends Configs implements PluginAwareInterface
 {
     use PluginAware;
 
-    protected $params = [
-        'debug' => 'On',
-    ];
+    protected function initParams()
+    {
+        parent::initParams();
+        $this->addParam('Debug', self::TYPE_BOOL, false);
+        $this->addParam('Env', self::TYPE_STR_LIST);
+    }
 
     /**
      * @return bool
      */
     public function isDebugMode()
     {
-        return $this->getBoolParam('debug', false);
+        return $this->getParam('debug');
     }
 
     /**
