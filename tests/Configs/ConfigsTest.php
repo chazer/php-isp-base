@@ -102,4 +102,30 @@ class ConfigsTest extends PHPUnit_Framework_TestCase
             file_exists($temp) && unlink($temp);
         }
     }
+
+    public function testToBoolean()
+    {
+        $c = $this->createConfigsObject(null, null);
+
+        $this->assertTrue($c->toBoolean(true));
+        $this->assertTrue($c->toBoolean(1));
+        $this->assertTrue($c->toBoolean(1.0));
+        $this->assertTrue($c->toBoolean('1'));
+        $this->assertTrue($c->toBoolean('1.0'));
+        $this->assertTrue($c->toBoolean('on'));
+        $this->assertTrue($c->toBoolean('On'));
+        $this->assertTrue($c->toBoolean('y'));
+        $this->assertTrue($c->toBoolean('Yes'));
+
+        $this->assertFalse($c->toBoolean(false));
+        $this->assertFalse($c->toBoolean(null));
+        $this->assertFalse($c->toBoolean([]));
+        $this->assertFalse($c->toBoolean(0));
+        $this->assertFalse($c->toBoolean(0.0));
+        $this->assertFalse($c->toBoolean('0'));
+        $this->assertFalse($c->toBoolean('0.0'));
+        $this->assertFalse($c->toBoolean('n'));
+        $this->assertFalse($c->toBoolean('N'));
+        $this->assertFalse($c->toBoolean('No'));
+    }
 }

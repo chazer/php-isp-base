@@ -226,14 +226,14 @@ class Configs
      */
     public function toBoolean($value)
     {
-        $value = strtolower($value);
-        if (in_array($value, [0, false, null, '', 'off', 'no', 'n'])) {
-            return false;
-        }
-        if (in_array($value, [1, true, 'on', 'yes', 'y'])) {
+        $value = is_string($value) ? strtolower($value) : $value;
+        if ($value === true) {
             return true;
         }
-        return false;
+        if (is_numeric($value) && $value > 0) {
+            return true;
+        }
+        return is_scalar($value) && in_array((string) $value, ['on', 'yes', 'y']);
     }
 
     protected function toStringForm($param, $value)
