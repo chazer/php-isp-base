@@ -215,7 +215,7 @@ class Configs
 
     private function normalizeParamName($name)
     {
-        return ucfirst(strtolower($name));
+        return strtolower($name);
     }
 
     /**

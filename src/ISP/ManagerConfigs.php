@@ -24,11 +24,11 @@ class ManagerConfigs extends Configs implements PluginAwareInterface
     protected function initParams()
     {
         parent::initParams();
-        $this->addParam('DBName', $this->getPlugin()->getManagerName());
-        $this->addParam('DBHost', 'localhost');
-        $this->addParam('DBUser', 'root');
-        $this->addParam('DBPassword', null);
-        $this->addParam('DBSocket', null);
+        $this->addParam('DBName', self::TYPE_STR, $this->getPlugin()->getManagerName());
+        $this->addParam('DBHost', self::TYPE_STR, 'localhost');
+        $this->addParam('DBUser', self::TYPE_STR, 'root');
+        $this->addParam('DBPassword', self::TYPE_STR, null);
+        $this->addParam('DBSocket', self::TYPE_STR, null);
     }
 
     public function getMySqlDSN()
