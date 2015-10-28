@@ -91,6 +91,16 @@ class PluginBase
     }
 
     /**
+     * Return plugin name
+     *
+     * @return string
+     */
+    public function getPluginName()
+    {
+        return PLUGIN_NAME;
+    }
+
+    /**
      * Return manager root path
      *
      * @return string
