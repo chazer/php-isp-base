@@ -11,7 +11,7 @@ namespace ISP;
 use ISP\Commands\CGIWrapper;
 use ISP\Commands\DummyCommand;
 use ISP\Console\MirrorOutput;
-use ISP\Interfaces\PluginAwareInterface;
+use ISP\Helpers\PluginAwareHelper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -391,12 +391,7 @@ class PluginBase
      */
     protected function processPluginAware($value)
     {
-        $array = is_array($value) ? $value : [&$value];
-        foreach ($array as &$v) {
-            if ($v instanceof PluginAwareInterface) {
-                $v->setPlugin($this);
-            }
-        }
+        PluginAwareHelper::setPlugin($this, $value);
     }
 
     /**
@@ -476,5 +471,33 @@ class PluginBase
             }
         }
         throw new \Exception('Console application runner is not defined');
+    }
+
+    protected function handlers()
+    {
+        return [];
+    }
+
+    /**
+     * Get handler configs
+     *
+     * @return array
+     */
+    public function getHandlers()
+    {
+        $default = [
+            'minlevel' => 7,
+        ];
+
+        $r = [];
+        $n = $this->getPluginName();
+        foreach ($this->handlers() as $k => $v) {
+            $k = strtr($k, [
+                '{plugin}' => $n
+            ]);
+            $r[$k] = array_merge($default, $v);
+        }
+
+        return $r;
     }
 }
