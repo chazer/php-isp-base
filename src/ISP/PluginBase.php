@@ -21,14 +21,6 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\StreamOutput;
 
-defined('MGR_NAME') or define('MGR_NAME', 'ispmgr');
-defined('MGR_ROOT') or define('MGR_ROOT', getcwd());
-defined('MGR_CONFIG_FILE') or define('MGR_CONFIG_FILE', 'etc/' . MGR_NAME . '.conf');
-defined('PLUGIN_NAME') or define('PLUGIN_NAME', 'noname');
-defined('PLUGIN_LOG_FILE') or define('PLUGIN_LOG_FILE', 'var/plugin_' . PLUGIN_NAME . '.log');
-defined('CONFIG_FILE') or define('CONFIG_FILE', 'etc/plugin_' . PLUGIN_NAME . '.conf');
-defined('CONFIG_FORMAT') or define('CONFIG_FORMAT', 'conf');
-
 class PluginBase
 {
     const CMD_BEFORE_INSTALL = 'preinstall';
@@ -44,7 +36,9 @@ class PluginBase
     /** @var string */
     public $configFile;
 
-    /** @var string */
+    protected $configFormat = 'conf';
+
+    /** @var string manager internal name */
     private $mgrName;
 
     /** @var ManagerConfigs */
@@ -52,6 +46,15 @@ class PluginBase
 
     /** @var string */
     public $mgrConfigFile;
+
+    /** @var string path to manager directory */
+    protected $mgrRoot = null;
+
+    /** @var string internal plugin name */
+    protected $pluginName = 'noname';
+
+    /** @var string path to plugin log file */
+    protected $pluginLogFile = 'var/plugin_{PLUGIN_NAME}.log';
 
     /** @var LoggerInterface */
     private $logger;
@@ -97,7 +100,7 @@ class PluginBase
      */
     public function getPluginName()
     {
-        return PLUGIN_NAME;
+        return $this->pluginName;
     }
 
     /**
@@ -107,7 +110,7 @@ class PluginBase
      */
     public function getMgrRoot()
     {
-        return rtrim(MGR_ROOT, '/\\') . DIRECTORY_SEPARATOR;
+        return rtrim($this->mgrRoot, '/\\') . DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -131,9 +134,24 @@ class PluginBase
      */
     public function init()
     {
-        isset($this->mgrName) || $this->mgrName = MGR_NAME;
-        $this->configFile || $this->configFile = CONFIG_FILE;
-        $this->mgrConfigFile || $this->mgrConfigFile = MGR_CONFIG_FILE;
+        $_ = function ($const, $default = null) {
+            return defined($const) ? get_defined_constants()[$const] : $default;
+        };
+        isset($this->mgrName) || $this->mgrName = $_('MGR_NAME') ?: 'ispmgr';
+        $this->configFile || $this->configFile = $_('CONFIG_FILE') ?: 'etc/plugin_{PLUGIN_NAME}.{CONFIG_FORMAT}';
+        $this->mgrConfigFile || $this->mgrConfigFile = $_('MGR_CONFIG_FILE') ?: 'etc/{MGR_NAME}.conf';
+        $this->mgrRoot || $this->mgrRoot = $_('MGR_ROOT') ?: getcwd();
+        $this->pluginLogFile || $this->pluginLogFile = $_('PLUGIN_LOG_FILE') ?: 'var/plugin_{PLUGIN_NAME}.log';
+
+        $resolve = function($template) {
+            return strtr($template, [
+                '{MGR_NAME}' => $this->getManagerName(),
+                '{PLUGIN_NAME}' => $this->getPluginName(),
+                '{CONFIG_FORMAT}' => $this->configFormat,
+            ]);
+        };
+        $this->configFile = $resolve($this->configFile);
+        $this->mgrConfigFile = $resolve($this->mgrConfigFile);
         $this->isInstalled = true;
         $this->isCGI = 'cli' !== php_sapi_name();
     }
@@ -170,7 +188,7 @@ class PluginBase
         if (isset($this->configs))
             return $this->configs;
 
-        $this->configs = $this->createPluginConfigs($this->getMgrRoot() . $this->configFile, CONFIG_FORMAT);
+        $this->configs = $this->createPluginConfigs($this->getMgrRoot() . $this->configFile, $this->configFormat);
         $this->processPluginAware($this->configs);
         if (!$this->configs->load()) {
             $this->getLogger()->warning('Plugin config not loaded');
@@ -238,7 +256,7 @@ class PluginBase
      */
     public function openLogStream()
     {
-        $logFile = PLUGIN_LOG_FILE;
+        $logFile = $this->pluginLogFile;
         $logDir = dirname($logFile);
         is_dir($logDir) || mkdir($logDir, 0777, true);
 
