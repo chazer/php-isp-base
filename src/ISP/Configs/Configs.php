@@ -133,6 +133,11 @@ class Configs
         throw new Exception('Unsupported file format: ' . $this->format);
     }
 
+    public function isExists()
+    {
+        return is_file($this->file);
+    }
+
     /**
      * @return bool
      */
@@ -141,10 +146,8 @@ class Configs
         $this->reset();
         $this->init();
 
-        if (!is_file($this->file)) {
-            $saved = $this->save();
-            if ($saved)
-                return false;
+        if (!$this->isExists()) {
+            return false;
         }
 
         $success = $this->getReader()->load($this->file, $config);
