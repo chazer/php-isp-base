@@ -433,7 +433,7 @@ class PluginBase
      */
     public function setWebApplicationRunner($runner)
     {
-        if (!is_file($runner) && !is_callable($runner))
+        if (!(is_string($runner) && is_file($runner)) && !is_callable($runner))
             throw new \Exception('Callable expected');
 
         $this->webApplicationRunner = $runner;
@@ -446,7 +446,7 @@ class PluginBase
     protected function runWebApplication()
     {
         if (isset($this->webApplicationRunner)) {
-            if (is_file($this->webApplicationRunner)) {
+            if (is_string($this->webApplicationRunner) && is_file($this->webApplicationRunner)) {
                 ob_start();
                 include $this->webApplicationRunner;
                 ob_end_flush();
@@ -465,7 +465,7 @@ class PluginBase
      */
     public function setConsoleApplicationRunner($runner)
     {
-        if (!is_file($runner) && !is_callable($runner))
+        if (!(is_string($runner) && is_file($runner)) && !is_callable($runner))
             throw new \Exception('Callable expected');
 
         $this->consoleApplication = $runner;
@@ -480,7 +480,7 @@ class PluginBase
     protected function runConsoleApplication(InputInterface $input = null, OutputInterface $output = null)
     {
         if (isset($this->consoleApplication)) {
-            if (is_file($this->consoleApplication)) {
+            if (is_string($this->consoleApplication) && is_file($this->consoleApplication)) {
                 return include $this->consoleApplication;
             } else {
                 $this->processPluginAware($this->webApplicationRunner);
