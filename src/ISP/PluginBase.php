@@ -152,6 +152,7 @@ class PluginBase
         };
         $this->configFile = $resolve($this->configFile);
         $this->mgrConfigFile = $resolve($this->mgrConfigFile);
+        $this->pluginLogFile = $resolve($this->pluginLogFile);
         $this->isInstalled = true;
         $this->isCGI = 'cli' !== php_sapi_name();
     }
