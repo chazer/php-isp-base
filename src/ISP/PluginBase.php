@@ -18,6 +18,7 @@ use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\StreamOutput;
 
@@ -253,7 +254,7 @@ class PluginBase
     }
 
     /**
-     * @return resource
+     * @return false|resource
      */
     public function openLogStream()
     {
@@ -261,15 +262,24 @@ class PluginBase
         $logDir = dirname($logFile);
         is_dir($logDir) || mkdir($logDir, 0777, true);
 
-        return fopen($logFile, 'a');
+        $h = fopen($logFile, 'a');
+        if (false === $h) {
+            $this->getLogger()->error("Couldn't create log file: " . $logFile);
+        }
+        return $h;
     }
 
     /**
-     * @return StreamOutput
+     * @return OutputInterface
      */
     public function getLogOutput()
     {
-        return $this->logOutput ? : $this->logOutput = new StreamOutput($this->openLogStream());
+        if (isset($this->logOutput)) {
+            return $this->logOutput;
+        }
+        $logFile = $this->openLogStream();
+        $this->logOutput = $logFile ? new StreamOutput($logFile) : new NullOutput();
+        return $this->logOutput;
     }
 
     /**
@@ -297,8 +307,14 @@ class PluginBase
             $this->isInstalled = false;
         }
 
+        // setup default ERROUT logging
+        $this->setLogger($this->createLogger($output->getErrorOutput()));
+
+        // try create file stream for logging
+        /** @var NullOutput|StreamOutput $logOutput */
         $logOutput = $this->getLogOutput();
         MirrorOutput::injectErrorOutput($output, $logOutput);
+        // replace logger
         $this->setLogger($this->createLogger($output->getErrorOutput()));
 
         $isDebug = $this->isInstalled && $this->getConfigs()->isDebugMode();
